@@ -51,6 +51,7 @@
         let originalImageUrl = ""; // URL asli setelah upload
         let modifiedImageUrl = ""; // URL setelah proses remove bg atau upscale
 
+        // Event listener untuk memilih gambar
         document.getElementById('imageInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
@@ -64,6 +65,7 @@
             }
         });
 
+        // Fungsi untuk menghapus background menggunakan Remove.bg API
         async function removeBackground() {
             if (!originalImageUrl) {
                 alert("Please select an image first.");
@@ -78,26 +80,34 @@
 
             alert("Processing... Removing background.");
 
-            const response = await fetch("https://api.remove.bg/v1.0/removebg", {
-                method: "POST",
-                headers: {
-                    "X-Api-Key": "QGL5tbX8PNwVPw8y7A4fzAYH"  // Ganti dengan API Key Remove.bg Anda
-                },
-                body: formData
-            });
+            try {
+                const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+                    method: "POST",
+                    headers: {
+                        "X-Api-Key": "YOUR_REMOVE_BG_API_KEY"  // Ganti dengan API Key Remove.bg Anda
+                    },
+                    body: formData
+                });
 
-            if (!response.ok) {
-                alert("Failed to remove background. Please check your API key.");
-                return;
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error("Remove.bg Error:", error);
+                    alert("Failed to remove background. Please check your API key.");
+                    return;
+                }
+
+                const data = await response.blob();
+                modifiedImageUrl = URL.createObjectURL(data);
+
+                document.getElementById('imagePreview').src = modifiedImageUrl;
+                sendToZakeke(modifiedImageUrl);
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("Failed to remove background due to network error.");
             }
-
-            const data = await response.blob();
-            modifiedImageUrl = URL.createObjectURL(data);
-
-            document.getElementById('imagePreview').src = modifiedImageUrl;
-            sendToZakeke(modifiedImageUrl);
         }
 
+        // Fungsi untuk meningkatkan resolusi gambar menggunakan DeepAI API
         async function upscaleImage() {
             if (!modifiedImageUrl) {
                 alert("Please select an image first.");
@@ -106,27 +116,32 @@
 
             alert("Processing... Upscaling image.");
 
-            const formData = new FormData();
-            formData.append("image", modifiedImageUrl);
+            try {
+                const response = await fetch("https://api.deepai.org/api/torch-srgan", {
+                    method: "POST",
+                    headers: {
+                        "api-key": "YOUR_DEEPAI_API_KEY",  // Ganti dengan API Key DeepAI Anda
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ image: modifiedImageUrl })
+                });
 
-            const response = await fetch("https://api.deepai.org/api/torch-srgan", {
-                method: "POST",
-                headers: {
-                    "api-key": "27e09416-8677-4401-8159-2ece5033759e"  // Ganti dengan API Key DeepAI Anda
-                },
-                body: formData
-            });
-
-            const data = await response.json();
-            if (data.output_url) {
-                modifiedImageUrl = data.output_url;
-                document.getElementById('imagePreview').src = modifiedImageUrl;
-                sendToZakeke(modifiedImageUrl);
-            } else {
-                alert("Failed to upscale image. Please check your API key.");
+                const data = await response.json();
+                if (data.output_url) {
+                    modifiedImageUrl = data.output_url;
+                    document.getElementById('imagePreview').src = modifiedImageUrl;
+                    sendToZakeke(modifiedImageUrl);
+                } else {
+                    console.error("DeepAI Error:", data);
+                    alert("Failed to upscale image. Please check your API key.");
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("Failed to upscale image due to network error.");
             }
         }
 
+        // Fungsi untuk mengirim gambar ke Zakeke melalui postMessage
         function sendToZakeke(imageUrl) {
             if (!imageUrl) {
                 alert("Error: No modified image URL found.");
