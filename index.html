@@ -8,24 +8,108 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 50px;
+            padding: 20px;
         }
         button {
-            padding: 10px 20px;
-            margin: 10px;
+            display: block;
+            width: 200px;
+            padding: 10px;
+            margin: 10px auto;
             font-size: 16px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+        }
+        .remove-bg {
+            background-color: #ff5733;
+        }
+        .upscale {
+            background-color: #3399ff;
+        }
+        img {
+            max-width: 100%;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
     <h2>Dokoyo Image Tools</h2>
-    
-    <button id="remove-bg">Remove Background</button>
-    <button id="upscale">Upscale Image</button>
 
-    <script src="script.js"></script>
+    <input type="file" id="imageInput" accept="image/*">
+    <br>
+    <button class="remove-bg" onclick="removeBackground()">Remove Background</button>
+    <button class="upscale" onclick="upscaleImage()">Upscale Image</button>
+
+    <h3>Preview:</h3>
+    <img id="imagePreview" src="" alt="No image selected">
+
+    <script>
+        let modifiedImageUrl = "";
+
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function removeBackground() {
+            const input = document.getElementById('imageInput');
+            if (input.files.length === 0) {
+                alert("Please select an image first.");
+                return;
+            }
+
+            alert("Removing background... (Simulated)");
+            
+            // Simulasi URL hasil gambar yang telah diubah
+            modifiedImageUrl = "https://dokoyoai.github.io/dokoyo-tools/processed-remove-bg.png"; 
+
+            // Tampilkan gambar hasil di preview
+            document.getElementById('imagePreview').src = modifiedImageUrl;
+
+            sendToZakeke();
+        }
+
+        function upscaleImage() {
+            const input = document.getElementById('imageInput');
+            if (input.files.length === 0) {
+                alert("Please select an image first.");
+                return;
+            }
+
+            alert("Upscaling image... (Simulated)");
+
+            // Simulasi URL hasil gambar yang telah diubah
+            modifiedImageUrl = "https://dokoyoai.github.io/dokoyo-tools/processed-upscale.png"; 
+
+            // Tampilkan gambar hasil di preview
+            document.getElementById('imagePreview').src = modifiedImageUrl;
+
+            sendToZakeke();
+        }
+
+        function sendToZakeke() {
+            if (!modifiedImageUrl) {
+                alert("Error: No modified image URL found.");
+                return;
+            }
+
+            window.parent.postMessage({
+                message_type: 'IMAGE_SELECTED',
+                url: modifiedImageUrl,
+                mime: 'image/png'
+            }, '*');
+
+            alert("Image sent to Zakeke!");
+        }
+    </script>
 
 </body>
 </html>
